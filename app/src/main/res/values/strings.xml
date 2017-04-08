@@ -1,6 +1,40 @@
 <resources>
     <string name="app_name">Backgroundify</string>
-    <string name="title_activity_main">MainActivity</string>
-    <string name="default_url">www.google.com</string>
+    <string name="title_activity_main">Backgroundify</string>
+
+
+    <string name="pref_url_default">www.google.com</string>
     <string name="pref_url_key">url</string>
+
+    <string name="pref_enable_title">Enable Updating</string>
+    <string name="pref_enable_key">enable</string>
+
+
+    <string name="pref_freq_key">freq</string>
+    <string name="pref_freq_label">Update Frequency</string>
+
+    <string name="pref_freq_once_label">Update Once</string>
+    <string name="pref_freq_1_min_label">Every Minute</string>
+    <string name="pref_freq_5_min_label">Every 5 Minutes</string>
+    <string name="pref_freq_10_min_label">Every 10 Minutes</string>
+    <string name="pref_freq_30_min_label">Every 30 Minutes</string>
+    <string name="pref_freq_1_hour_label">Every Hour</string>
+    <string name="pref_freq_4_hour_label">Every 4 Hours</string>
+    <string name="pref_freq_12_hour_label">Every 12 Hours</string>
+    <string name="pref_freq_1_day_label">Every Day</string>
+    <string name="pref_freq_3_day_label">Every 3 Days</string>
+    <string name="pref_freq_1_week_label">Every Week</string>
+
+    <string name="pref_freq_once_value">0</string>
+    <string name="pref_freq_1_min_value">1</string>
+    <string name="pref_freq_5_min_value">5</string>
+    <string name="pref_freq_10_min_value">10</string>
+    <string name="pref_freq_30_min_value">30</string>
+    <string name="pref_freq_1_hour_value">60</string>
+    <string name="pref_freq_4_hour_value">240</string>
+    <string name="pref_freq_12_hour_value">720</string>
+    <string name="pref_freq_1_day_value">1440</string>
+    <string name="pref_freq_3_day_value">4320</string>
+    <string name="pref_freq_1_week_value">10080</string>
+
 </resources>
