@@ -3,7 +3,7 @@
     <string name="title_activity_main">Backgroundify</string>
 
 
-    <string name="pref_url_default">www.google.com</string>
+    <string name="pref_url_default">https://www.google.com</string>
     <string name="pref_url_key">url</string>
 
     <string name="pref_enable_title">Enable Updating</string>
@@ -39,5 +39,8 @@
 
     <string name="button_preview">Preview URL</string>
     <string name="button_accept">Backgroundify!</string>
+
+    <string name="broadcast_update_background">io.thomaspritchard.backgroundify.UPDATE_BACKGROUND</string>
+    <string name="broadcast_boot_completed">android.intent.action.BOOT_COMPLETED</string>
 
 </resources>

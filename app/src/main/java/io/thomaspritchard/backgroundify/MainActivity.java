@@ -3,7 +3,9 @@ package io.thomaspritchard.backgroundify;
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.WallpaperManager;
+import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.Point;
@@ -27,6 +29,7 @@ import java.io.IOException;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
+    public static final String URL = "url";
     SharedPreferences mSharedPreferences = null;
     String mUrl = null;
     WebView mWebView = null;
@@ -60,12 +63,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         mWebView.getSettings().setJavaScriptCanOpenWindowsAutomatically(true);
         mWebView.setWebViewClient(new WebViewClient());
         mWebView.loadUrl(mUrl);
-
-
-        // Display the fragment as the main content.
-//        getFragmentManager().beginTransaction()
-//                .replace(android.R.id.content, new SettingsFragment())
-//                .commit();
     }
 
     @Override
@@ -78,7 +75,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
         else if(id == R.id.button_backgroundify) {
             Log.d("Testing", "Backgroundify Called!");
-            AlarmHelper.updateAlarm(this);
+            AlarmHelper alarmHelper = new AlarmHelper();
+            alarmHelper.setAlarm(this, false);
         }
     }
 }

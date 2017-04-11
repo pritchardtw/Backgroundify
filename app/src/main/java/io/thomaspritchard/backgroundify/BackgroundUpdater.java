@@ -31,34 +31,34 @@ import java.io.IOException;
  * Created by thomas on 4/7/17.
  */
 
-public class UpdateBackgroundReceiver extends BroadcastReceiver {
+public class BackgroundUpdater {
+
     Context mContext = null;
-    @Override
-    public void onReceive(Context context, Intent intent) {
-        String newUrl = "";
-        int height = 0;
-        int width = 0;
-        mContext = context;
-        Log.d("Background Receiver", "Received update background signal");
-        if (intent.getAction().equals("io.thomaspritchard.backgroundify.UPDATE_BACKGROUND")) {
-            Log.d("Background Receicver", "Received update background action");
-            newUrl = intent.getExtras().getString(AlarmHelper.URL);
-            Log.d("Background Receicver", "URL " + newUrl);
-            updateBackground(newUrl);
-        }
+    private int mHeight = 0;
+    private int mWidth = 0;
+    private String mUrl = "";
+
+    public void setContext(Context context) {
+        this.mContext = context;
+    }
+
+    public void setHeight(int height) {
+        this.mHeight = height;
+    }
+
+    public void setWidth(int width) {
+        this.mWidth = width;
+    }
+
+    public void setUrl(String url) {
+        this.mUrl = url;
     }
 
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
-    private boolean updateBackground(String url) {
-        //generate a service to run based on preferences.
-        WindowManager wm = (WindowManager) mContext.getSystemService(Context.WINDOW_SERVICE);
-        Display display = wm.getDefaultDisplay();
-        Point size = new Point();
-        display.getSize(size);
-        int width = size.x;
-        int height = size.y;
+    public boolean updateBackground() {
+
         WebView w = new WebView(mContext);
-        w.layout(0, 0, width, height);
+        w.layout(0, 0, mWidth, mHeight);
         w.getSettings().setJavaScriptEnabled(true);
         w.getSettings().setJavaScriptCanOpenWindowsAutomatically(true);
         w.setVisibility(View.GONE);
@@ -67,6 +67,7 @@ public class UpdateBackgroundReceiver extends BroadcastReceiver {
 
             boolean timeout = true;
             boolean timedout = false;
+            boolean firstTimeout = true;
 
             @Override
             public void onPageStarted(WebView view, String url, Bitmap favicon) {
@@ -81,10 +82,15 @@ public class UpdateBackgroundReceiver extends BroadcastReceiver {
                         }
                         if(timeout) {
                             timedout = true;
+                            if(firstTimeout) {
+                                firstTimeout = false;
+                                Log.d("Testing", "First timeout re-issuing broadcast");
+                                AlarmHelper alarmHelper = new AlarmHelper();
+                                alarmHelper.cancelLastAlarm(mContext);
+                                alarmHelper.setAlarm(mContext, false);
+                            }
                             // do what you want
                             Log.d("Testing", "Timed out");
-                            //Update alarm asap page didn't load try again.
-                            AlarmHelper.updateAlarm(false);
                         }
                     }
                 }).start();
@@ -100,7 +106,6 @@ public class UpdateBackgroundReceiver extends BroadcastReceiver {
                 }
                 else {
                     Log.d("Testing", "Page finished");
-                    AlarmHelper.updateAlarm(true);
                     super.onPageFinished(view, url);
                     Bitmap newBackground = takePicture(view);
 
@@ -126,9 +131,7 @@ public class UpdateBackgroundReceiver extends BroadcastReceiver {
             CookieManager.getInstance().setAcceptThirdPartyCookies(w, true);
             CookieManager.getInstance().setAcceptFileSchemeCookies(true);
         }
-        w.loadUrl(url);
-        String freq = PreferenceManager.getDefaultSharedPreferences(mContext.getApplicationContext()).getString(mContext.getResources().getString(R.string.pref_freq_key), mContext.getResources().getString(R.string.pref_freq_once_value));
-        Log.d("Testing", "Frequency is " + freq);
+        w.loadUrl(mUrl);
         return true;
     }
 
