@@ -1,5 +1,6 @@
 package io.thomaspritchard.backgroundify;
 
+import android.annotation.TargetApi;
 import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.content.ComponentName;
@@ -18,56 +19,100 @@ import android.util.Log;
 public class AlarmHelper {
 
     static final String URL = "io.thomaspritchard.backgroundify.URL";
-
+    public static boolean pageFinished = false;
+    public static Context context = null;
+    public static boolean firstFire = false;
     //Updates alarm according to context's preference settings.
-    public static void updateAlarm(Context context) {
+    public static void updateAlarm(Context newContext) {
+        context = newContext;
+        boolean delayed = false;
+        setAlarm(delayed);
+    }
+
+    public static void updateAlarm(boolean delayed) {
+        setAlarm(delayed);
+    }
+
+    @TargetApi(19)
+    private static void setAlarm(boolean delayed) {
+
+        if(context == null) {
+            return;
+        }
 
         String updateFrequency = "";
         String newUrl = "";
         Boolean enabled = false;
+        long updateFreqAsLong = 0;
         AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context.getApplicationContext());
 
         updateFrequency = sharedPreferences.getString(context.getResources().getString(R.string.pref_freq_key), context.getResources().getString(R.string.pref_freq_once_value));
         newUrl = sharedPreferences.getString(context.getResources().getString(R.string.pref_url_key), context.getResources().getString(R.string.pref_url_default));
         enabled = sharedPreferences.getBoolean(context.getResources().getString(R.string.pref_enable_key), false);
-        int updateFreqAsInt = Integer.parseInt(updateFrequency);
+        updateFreqAsLong = Long.parseLong(updateFrequency);
+
+        PendingIntent exactPendingIntent = null;
         PendingIntent pendingIntent = null;
         Log.d("ALARM PARAMS", "Enabled: " + enabled + " URL: " + newUrl + " Frequency: " + updateFrequency);
         Intent updateBackground = new Intent("io.thomaspritchard.backgroundify.UPDATE_BACKGROUND");
         updateBackground.putExtra(URL, newUrl);
-        pendingIntent = PendingIntent.getBroadcast(context, 0, updateBackground, PendingIntent.FLAG_UPDATE_CURRENT);
+        exactPendingIntent = PendingIntent.getBroadcast(context, 0, updateBackground, PendingIntent.FLAG_UPDATE_CURRENT);
+        //pendingIntent = PendingIntent.getBroadcast(context, 1, updateBackground, PendingIntent.FLAG_UPDATE_CURRENT);
 
         if(enabled) {
-
-            if(!(updateFrequency.equals(context.getResources().getString(R.string.pref_freq_once_value)))) {
-                //START THE ALARM
-                Log.d("ALARM START", "Starting Repeating Alarm");
-                alarmManager.setRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP,
+            if(!delayed) {
+                //Requesting alarm to be set to trigger immediately.
+                Log.d("ALARM START", "Starting Undelayed Exact Alarm");
+                alarmManager.setExact(AlarmManager.ELAPSED_REALTIME_WAKEUP,
                         SystemClock.elapsedRealtime(),
-                        (60 * 1000 * updateFreqAsInt),
-                        pendingIntent);
+                        exactPendingIntent);
             }
             else {
-                //This will run the background updater itent once right when the settings are changed if enabled.
-                Log.d("ALARM START", "Starting Initial Alarm");
-                alarmManager.set(AlarmManager.ELAPSED_REALTIME,
-                        SystemClock.elapsedRealtime(),
-                        pendingIntent);
+                //Requesting alarm to be set according to preferences.
+                if(!updateFrequency.equals(context.getResources().getString(R.string.pref_freq_once_value))) {
+                    if(android.os.Build.VERSION.SDK_INT >= 19) {
+                        //Set next alarm for preferred interval.
+                        Log.d("Testing", "Starting delayed alarm, delayed by " + updateFrequency + " minutes");
+                        alarmManager.setExact(AlarmManager.ELAPSED_REALTIME_WAKEUP,
+                                SystemClock.elapsedRealtime() + (1000 * 60 * updateFreqAsLong),
+                                exactPendingIntent);
+                    }
+                    else { //setExact is api 19 or greator, set behaves as setExact in api 19 or less.
+                        //Set next alarm for preferred interval.
+                        Log.d("Testing", "Starting delayed alarm, delayed by " + updateFrequency + " minutes");
+                        alarmManager.set(AlarmManager.ELAPSED_REALTIME_WAKEUP,
+                                SystemClock.elapsedRealtime() + (1000 * 60 * updateFreqAsLong),
+                                exactPendingIntent);
+                    }
+
+                    //Enable boot up alarm starting
+                    ComponentName receiver = new ComponentName(context, OnBootReceiver.class);
+                    PackageManager pm = context.getPackageManager();
+
+                    pm.setComponentEnabledSetting(receiver,
+                            PackageManager.COMPONENT_ENABLED_STATE_ENABLED,
+                            PackageManager.DONT_KILL_APP);
+                }
+                else {
+                    //do not set alarm, page just needed to be updated once.
+                    Log.d("Testing", "Page loaded once not restarting alarm.");
+                    //Disable boot up alarm starting
+                    ComponentName receiver = new ComponentName(context, OnBootReceiver.class);
+                    PackageManager pm = context.getPackageManager();
+
+                    pm.setComponentEnabledSetting(receiver,
+                            PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
+                            PackageManager.DONT_KILL_APP);
+                }
             }
-
-            //Enable boot up alarm starting
-            ComponentName receiver = new ComponentName(context, OnBootReceiver.class);
-            PackageManager pm = context.getPackageManager();
-
-            pm.setComponentEnabledSetting(receiver,
-                    PackageManager.COMPONENT_ENABLED_STATE_ENABLED,
-                    PackageManager.DONT_KILL_APP);
         }
         else {
             //Cancel the alarm
             Log.d("ALARM STOP", "Stopping Alarm");
+            alarmManager.cancel(exactPendingIntent);
             alarmManager.cancel(pendingIntent);
+
             //Disable boot up alarm starting
             ComponentName receiver = new ComponentName(context, OnBootReceiver.class);
             PackageManager pm = context.getPackageManager();
