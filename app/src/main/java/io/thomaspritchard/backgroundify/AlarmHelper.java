@@ -53,18 +53,16 @@ public class AlarmHelper {
         updateFreqAsLong = Long.parseLong(updateFrequency);
 
         PendingIntent exactPendingIntent = null;
-        PendingIntent pendingIntent = null;
         Log.d("ALARM PARAMS", "Enabled: " + enabled + " URL: " + newUrl + " Frequency: " + updateFrequency);
         Intent updateBackground = new Intent("io.thomaspritchard.backgroundify.UPDATE_BACKGROUND");
         updateBackground.putExtra(URL, newUrl);
         exactPendingIntent = PendingIntent.getBroadcast(context, 0, updateBackground, PendingIntent.FLAG_UPDATE_CURRENT);
-        //pendingIntent = PendingIntent.getBroadcast(context, 1, updateBackground, PendingIntent.FLAG_UPDATE_CURRENT);
 
         if(enabled) {
             if(!delayed) {
                 //Requesting alarm to be set to trigger immediately.
                 Log.d("ALARM START", "Starting Undelayed Exact Alarm");
-                alarmManager.setExact(AlarmManager.ELAPSED_REALTIME_WAKEUP,
+                alarmManager.setExact(AlarmManager.ELAPSED_REALTIME,
                         SystemClock.elapsedRealtime(),
                         exactPendingIntent);
             }
@@ -74,14 +72,14 @@ public class AlarmHelper {
                     if(android.os.Build.VERSION.SDK_INT >= 19) {
                         //Set next alarm for preferred interval.
                         Log.d("Testing", "Starting delayed alarm, delayed by " + updateFrequency + " minutes");
-                        alarmManager.setExact(AlarmManager.ELAPSED_REALTIME_WAKEUP,
+                        alarmManager.setExact(AlarmManager.ELAPSED_REALTIME,
                                 SystemClock.elapsedRealtime() + (1000 * 60 * updateFreqAsLong),
                                 exactPendingIntent);
                     }
-                    else { //setExact is api 19 or greator, set behaves as setExact in api 19 or less.
+                    else { //setExact is api 19 or greater, set behaves as setExact in api 19 or less.
                         //Set next alarm for preferred interval.
                         Log.d("Testing", "Starting delayed alarm, delayed by " + updateFrequency + " minutes");
-                        alarmManager.set(AlarmManager.ELAPSED_REALTIME_WAKEUP,
+                        alarmManager.set(AlarmManager.ELAPSED_REALTIME,
                                 SystemClock.elapsedRealtime() + (1000 * 60 * updateFreqAsLong),
                                 exactPendingIntent);
                     }
@@ -97,6 +95,7 @@ public class AlarmHelper {
                 else {
                     //do not set alarm, page just needed to be updated once.
                     Log.d("Testing", "Page loaded once not restarting alarm.");
+
                     //Disable boot up alarm starting
                     ComponentName receiver = new ComponentName(context, OnBootReceiver.class);
                     PackageManager pm = context.getPackageManager();
@@ -111,7 +110,6 @@ public class AlarmHelper {
             //Cancel the alarm
             Log.d("ALARM STOP", "Stopping Alarm");
             alarmManager.cancel(exactPendingIntent);
-            alarmManager.cancel(pendingIntent);
 
             //Disable boot up alarm starting
             ComponentName receiver = new ComponentName(context, OnBootReceiver.class);

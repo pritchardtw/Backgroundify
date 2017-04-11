@@ -1,7 +1,54 @@
 <?xml version="1.0" encoding="utf-8"?>
-<fragment xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/activity_main"
-    android:name="io.thomaspritchard.backgroundify.SettingsFragment"
+    android:name="io.thomaspritchard.backgroundify.MainActivity"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"/>
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <fragment
+        android:id="@+id/settings_fragment"
+        android:name="io.thomaspritchard.backgroundify.SettingsFragment"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_weight="0"/>
+
+    <WebView
+        android:id="@+id/preview_webview"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_weight="1">
+    </WebView>
+
+    <TableRow
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_weight="0"
+        android:orientation="horizontal"
+        android:background="#444444">
+
+        <Button
+            android:id="@+id/button_preview"
+            android:layout_height="match_parent"
+            android:layout_width="match_parent"
+            android:textAlignment="center"
+            android:text="@string/button_preview"
+            android:textColor="@android:color/white"
+            android:background="#444444"
+            android:layout_weight="1"
+            style="?android:buttonBarButtonStyle"/>
+
+        <Button
+            android:id="@+id/button_backgroundify"
+            android:layout_height="match_parent"
+            android:layout_width="match_parent"
+            android:textAlignment="center"
+            android:text="@string/button_accept"
+            android:textColor="@android:color/white"
+            android:background="#444444"
+            android:layout_weight="1"
+            style="?android:buttonBarButtonStyle"/>
+
+    </TableRow>
+</LinearLayout>
 

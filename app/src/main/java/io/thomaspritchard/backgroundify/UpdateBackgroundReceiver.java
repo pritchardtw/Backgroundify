@@ -61,8 +61,6 @@ public class UpdateBackgroundReceiver extends BroadcastReceiver {
         w.layout(0, 0, width, height);
         w.getSettings().setJavaScriptEnabled(true);
         w.getSettings().setJavaScriptCanOpenWindowsAutomatically(true);
-        w.getSettings().setMixedContentMode(WebSettings.MIXED_CONTENT_COMPATIBILITY_MODE);
-        w.getSettings().setCacheMode(WebSettings.LOAD_DEFAULT);
         w.setVisibility(View.GONE);
 
         w.setWebViewClient(new WebViewClient() {
@@ -124,7 +122,7 @@ public class UpdateBackgroundReceiver extends BroadcastReceiver {
 
         Log.d("LOAD", "About to load URL");
         CookieManager.getInstance().setAcceptCookie(true);
-        if(android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {//at least version 24
+        if(android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {//at least version lollipop
             CookieManager.getInstance().setAcceptThirdPartyCookies(w, true);
             CookieManager.getInstance().setAcceptFileSchemeCookies(true);
         }

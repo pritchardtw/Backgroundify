@@ -1,17 +1,8 @@
 package io.thomaspritchard.backgroundify;
 
-
-import android.annotation.TargetApi;
-import android.app.Activity;
-import android.app.WallpaperManager;
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.graphics.Bitmap;
-import android.graphics.Canvas;
-import android.os.Build;
 import android.os.Bundle;
-import android.os.SystemClock;
 import android.preference.CheckBoxPreference;
 import android.preference.EditTextPreference;
 import android.preference.ListPreference;
@@ -20,13 +11,6 @@ import android.preference.PreferenceFragment;
 import android.preference.PreferenceScreen;
 import android.preference.SwitchPreference;
 import android.util.Log;
-import android.view.View;
-import android.webkit.CookieManager;
-import android.webkit.WebSettings;
-import android.webkit.WebView;
-import android.webkit.WebViewClient;
-
-import java.io.IOException;
 
 
 public class SettingsFragment extends PreferenceFragment implements
@@ -86,8 +70,6 @@ public class SettingsFragment extends PreferenceFragment implements
             String value = sharedPreferences.getString(key, "");
             setPreferenceSummary(preference, value);
         }
-
-        AlarmHelper.updateAlarm(mContext);
     }
 
     @Override

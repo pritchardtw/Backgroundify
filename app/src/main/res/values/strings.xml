@@ -37,4 +37,7 @@
     <string name="pref_freq_3_day_value">4320</string>
     <string name="pref_freq_1_week_value">10080</string>
 
+    <string name="button_preview">Preview URL</string>
+    <string name="button_accept">Backgroundify!</string>
+
 </resources>
