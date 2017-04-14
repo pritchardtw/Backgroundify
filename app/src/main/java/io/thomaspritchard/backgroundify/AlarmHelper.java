@@ -52,62 +52,32 @@ public class AlarmHelper {
             if(!delayed) {
                 //Requesting alarm to be set to trigger immediately.
                 Log.d("ALARM START", "Starting Undelayed Exact Alarm");
-                alarmManager.setExact(AlarmManager.ELAPSED_REALTIME_WAKEUP,
+                alarmManager.setExact(AlarmManager.ELAPSED_REALTIME,
                         SystemClock.elapsedRealtime(),
                         exactPendingIntent);
             }
             else {
                 //Requesting alarm to be set according to preferences.
-                if(!updateFrequency.equals(context.getResources().getString(R.string.pref_freq_once_value))) {
-                    if(android.os.Build.VERSION.SDK_INT >= 19) {
-                        //Set next alarm for preferred interval.
-                        Log.d("Testing", "Starting delayed alarm, delayed by " + updateFrequency + " minutes");
-                        alarmManager.setExact(AlarmManager.ELAPSED_REALTIME_WAKEUP,
-                                SystemClock.elapsedRealtime() + (1000 * 15 * updateFreqAsLong),
-                                exactPendingIntent);
-                    }
-                    else { //setExact is api 19 or greater, set behaves as setExact in api 19 or less.
-                        //Set next alarm for preferred interval.
-                        Log.d("Testing", "Starting delayed alarm, delayed by " + updateFrequency + " minutes");
-                        alarmManager.set(AlarmManager.ELAPSED_REALTIME_WAKEUP,
-                                SystemClock.elapsedRealtime() + (1000 * 60 * updateFreqAsLong),
-                                exactPendingIntent);
-                    }
-
-                    //Enable boot up alarm starting
-                    ComponentName receiver = new ComponentName(context, BackgroundifyBroadcastReceiver.class);
-                    PackageManager pm = context.getPackageManager();
-
-                    pm.setComponentEnabledSetting(receiver,
-                            PackageManager.COMPONENT_ENABLED_STATE_ENABLED,
-                            PackageManager.DONT_KILL_APP);
+                if(android.os.Build.VERSION.SDK_INT >= 19) {
+                    //Set next alarm for preferred interval.
+                    Log.d("Testing", "Starting delayed alarm, delayed by " + updateFrequency + " minutes");
+                    alarmManager.setExact(AlarmManager.ELAPSED_REALTIME,
+                            SystemClock.elapsedRealtime() + (1000 * 60 * updateFreqAsLong),
+                            exactPendingIntent);
                 }
-                else {
-                    //do not set alarm, page just needed to be updated once.
-                    Log.d("Testing", "Page loaded once not restarting alarm.");
-
-                    //Disable boot up alarm starting
-                    ComponentName receiver = new ComponentName(context, BackgroundifyBroadcastReceiver.class);
-                    PackageManager pm = context.getPackageManager();
-
-                    pm.setComponentEnabledSetting(receiver,
-                            PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
-                            PackageManager.DONT_KILL_APP);
+                else { //setExact is api 19 or greater, set behaves as setExact in api 19 or less.
+                    //Set next alarm for preferred interval.
+                    Log.d("Testing", "Starting delayed alarm, delayed by " + updateFrequency + " minutes");
+                    alarmManager.set(AlarmManager.ELAPSED_REALTIME,
+                            SystemClock.elapsedRealtime() + (1000 * 60 * updateFreqAsLong),
+                            exactPendingIntent);
                 }
             }
         }
         else {
             //Cancel the alarm
             Log.d("ALARM STOP", "Stopping Alarm");
-            alarmManager.cancel(exactPendingIntent);
-
-            //Disable boot up alarm starting
-            ComponentName receiver = new ComponentName(context, BackgroundifyBroadcastReceiver.class);
-            PackageManager pm = context.getPackageManager();
-
-            pm.setComponentEnabledSetting(receiver,
-                    PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
-                    PackageManager.DONT_KILL_APP);
+            alarmManager.cancel(mLastPendingIntent);
         }
     }
 

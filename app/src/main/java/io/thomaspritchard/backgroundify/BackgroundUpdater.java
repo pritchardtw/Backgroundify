@@ -8,9 +8,11 @@ import android.app.WallpaperManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Point;
+import android.net.http.SslError;
 import android.os.Build;
 import android.os.IBinder;
 import android.os.SystemClock;
@@ -21,9 +23,11 @@ import android.view.Display;
 import android.view.View;
 import android.view.WindowManager;
 import android.webkit.CookieManager;
+import android.webkit.SslErrorHandler;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.Button;
 
 import java.io.IOException;
 
@@ -71,6 +75,7 @@ public class BackgroundUpdater {
 
             @Override
             public void onPageStarted(WebView view, String url, Bitmap favicon) {
+                super.onPageStarted(view, url, favicon);
                 new Thread(new Runnable() {
                     @Override
                     public void run() {
@@ -100,23 +105,34 @@ public class BackgroundUpdater {
             @TargetApi(android.os.Build.VERSION_CODES.N)
             public void onPageFinished(WebView view, String url) {
                 timeout = false;
+                super.onPageFinished(view, url);
                 if(timedout) {
                     timedout = false;
                     Log.d("Testing", "Page loaded too slow timed out and restarted page load.");
                 }
                 else {
                     Log.d("Testing", "Page finished");
-                    super.onPageFinished(view, url);
                     Bitmap newBackground = takePicture(view);
-
                     WallpaperManager wallpaperManager = WallpaperManager.getInstance(mContext);
                     try {
                         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {//at least version 24
                             wallpaperManager.setBitmap(newBackground, null, true, WallpaperManager.FLAG_SYSTEM);
                             //TODO: If premium do wallpaper.
-                            wallpaperManager.setBitmap(newBackground, null, true, WallpaperManager.FLAG_LOCK);
+                            SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(mContext.getApplicationContext());
+                            Boolean updateLock = sharedPreferences.getBoolean(mContext.getResources().getString(R.string.pref_enable_lock_key), false);
+                            if(updateLock) {
+                                wallpaperManager.setBitmap(newBackground, null, true, WallpaperManager.FLAG_LOCK);
+                            }
                         } else {
                             wallpaperManager.setBitmap(newBackground);
+                            SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(mContext.getApplicationContext());
+                            Boolean updateLock = sharedPreferences.getBoolean(mContext.getResources().getString(R.string.pref_enable_lock_key), false);
+                            if(updateLock) {
+                                Log.d("Testing", "Would update lock if api > 24");
+                            }
+                            else {
+                                Log.d("Testing", "Would not update lock if api > 24");
+                            }
                         }
                     } catch (IOException e) {
                         e.printStackTrace();

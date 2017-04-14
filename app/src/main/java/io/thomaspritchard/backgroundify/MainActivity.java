@@ -1,33 +1,49 @@
 package io.thomaspritchard.backgroundify;
 
 import android.annotation.TargetApi;
-import android.app.Activity;
+import android.app.FragmentManager;
+import android.app.FragmentTransaction;
+import android.app.PendingIntent;
 import android.app.WallpaperManager;
-import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.content.SharedPreferences;
-import android.graphics.Bitmap;
 import android.graphics.Point;
 import android.os.Bundle;
+import android.os.IBinder;
+import android.os.RemoteException;
 import android.preference.PreferenceManager;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
+import android.text.Html;
 import android.util.Log;
 import android.view.Display;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.WindowManager;
-import android.webkit.WebChromeClient;
-import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.Button;
+import com.android.vending.billing.IInAppBillingService;
 
-import java.io.IOException;
+import org.json.JSONException;
+import org.json.JSONObject;
 
-public class MainActivity extends AppCompatActivity implements View.OnClickListener {
+import java.util.ArrayList;
+
+import static android.view.View.GONE;
+import static io.thomaspritchard.backgroundify.IabHelper.BILLING_RESPONSE_RESULT_ERROR;
+import static io.thomaspritchard.backgroundify.IabHelper.BILLING_RESPONSE_RESULT_OK;
+import static io.thomaspritchard.backgroundify.IabHelper.BILLING_RESPONSE_RESULT_USER_CANCELED;
+
+public class MainActivity extends AppCompatActivity implements View.OnClickListener, SharedPreferences.OnSharedPreferenceChangeListener {
+
+    public static boolean mBackgroundifyPro = false;
 
     public static final String URL = "url";
     SharedPreferences mSharedPreferences = null;
@@ -35,21 +51,59 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     WebView mWebView = null;
     Button mButtonPreview = null;
     Button mButtonBackgroundify = null;
+    Button mButtonUpgrade = null;
+    Bundle mSavedInstanceState = null;
+    IInAppBillingService mService;
+
+    ServiceConnection mServiceConn = new ServiceConnection() {
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+            mService = null;
+        }
+
+        @Override
+        public void onServiceConnected(ComponentName name,
+                                       IBinder service) {
+            mService = IInAppBillingService.Stub.asInterface(service);
+
+            try {
+                Bundle purchases = mService.getPurchases(3, getPackageName(), "inapp", "");
+
+                if(purchases.getInt("RESPONSE_CODE", BILLING_RESPONSE_RESULT_ERROR) == BILLING_RESPONSE_RESULT_OK){
+                    //purchases was successfully received.
+                    ArrayList<String> purchasesArray = purchases.getStringArrayList("INAPP_PURCHASE_ITEM_LIST");
+                    if(purchasesArray != null) {
+                        if(purchasesArray.contains(getString(R.string.sku_backgroundify_pro))){
+                            mBackgroundifyPro = true;
+                        }
+                    }
+                }
+            }
+            catch(RemoteException e) {
+                e.printStackTrace();
+            }
+
+            if(mBackgroundifyPro) {
+                mButtonUpgrade.setVisibility(GONE);
+                handleSuccessfulUpgradeActions();
+            }
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        mSavedInstanceState = savedInstanceState;
         setContentView(R.layout.activity_main);
 
         mSharedPreferences = PreferenceManager.getDefaultSharedPreferences(this.getApplicationContext());
         mUrl = mSharedPreferences.getString(getString(R.string.pref_url_key), getString(R.string.pref_url_default));
         mWebView = (WebView) findViewById(R.id.preview_webview);
-        mButtonPreview = (Button)findViewById(R.id.button_preview);
-        mButtonBackgroundify = (Button)findViewById(R.id.button_backgroundify);
-
-        mButtonPreview.setOnClickListener(this);
+        mButtonBackgroundify = (Button) findViewById(R.id.button_backgroundify);
+        mButtonUpgrade = (Button) findViewById(R.id.button_upgrade);
         mButtonBackgroundify.setOnClickListener(this);
+        mButtonUpgrade.setOnClickListener(this);
 
         mUrl = mSharedPreferences.getString(getString(R.string.pref_url_key), getString(R.string.pref_url_default));
         WindowManager wm = (WindowManager) getSystemService(Context.WINDOW_SERVICE);
@@ -63,20 +117,158 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         mWebView.getSettings().setJavaScriptCanOpenWindowsAutomatically(true);
         mWebView.setWebViewClient(new WebViewClient());
         mWebView.loadUrl(mUrl);
+
+        mSharedPreferences.registerOnSharedPreferenceChangeListener(this);
+
+        Intent serviceIntent =
+                new Intent("com.android.vending.billing.InAppBillingService.BIND");
+        serviceIntent.setPackage("com.android.vending");
+        bindService(serviceIntent, mServiceConn, Context.BIND_AUTO_CREATE);
+    }
+
+    private void searchWebPage() {
+        Log.d("Testing", "Preview Called!");
+        mUrl = mSharedPreferences.getString(getString(R.string.pref_url_key), getString(R.string.pref_url_default));
+        mWebView.loadUrl(mUrl);
+    }
+
+    private void backgroundify() {
+        Log.d("Testing", "Backgroundify Called!");
+        AlarmHelper alarmHelper = new AlarmHelper();
+        alarmHelper.setAlarm(this, false);
+        mButtonBackgroundify.setText(getString(R.string.button_complete));
+    }
+
+    private void upgrade() {
+        Log.d("Testing", "Upgrade!!!!!");
+        Bundle buyIntentBundle = null;
+        try {
+            buyIntentBundle = mService.getBuyIntent(3, getPackageName(),
+                    getString(R.string.sku_backgroundify_pro), "inapp", "");
+        } catch(RemoteException e) {
+            e.printStackTrace();
+        }
+
+        if(buyIntentBundle.getInt("RESPONSE_CODE", BILLING_RESPONSE_RESULT_USER_CANCELED) == BILLING_RESPONSE_RESULT_OK) {
+            //pro selection was success.
+            PendingIntent pendingIntent = buyIntentBundle.getParcelable("BUY_INTENT");
+            if(pendingIntent != null) {
+                try {
+                    startIntentSenderForResult(pendingIntent.getIntentSender(),
+                            1001, new Intent(), Integer.valueOf(0), Integer.valueOf(0),
+                            Integer.valueOf(0));
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == 1001) {
+            int responseCode = data.getIntExtra("RESPONSE_CODE", 0);
+            String purchaseData = data.getStringExtra("INAPP_PURCHASE_DATA");
+            String dataSignature = data.getStringExtra("INAPP_DATA_SIGNATURE");
+
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setPositiveButton("Okay!", new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                        }
+                    });
+
+            AlertDialog alert = builder.create();
+            if (resultCode == RESULT_OK) {
+                try {
+                    JSONObject jo = new JSONObject(purchaseData);
+                    String sku = jo.getString("productId");
+                    alert.setTitle("Congratulations!");
+                    alert.setMessage("You have bought " + sku + "!");
+                    alert.show();
+                    mBackgroundifyPro = true;
+                }
+                catch (JSONException e) {
+                    alert.setTitle("Uh-oh!");
+                    alert.setMessage("Failed to parse purchase data.");
+                    alert.show();
+                    e.printStackTrace();
+                }
+                handleSuccessfulUpgradeActions();
+            }
+        }
     }
 
     @Override
     public void onClick(View v) {
         int id = v.getId();
-        if(id == R.id.button_preview) {
-            Log.d("Testing", "Preview Called!");
-            mUrl = mSharedPreferences.getString(getString(R.string.pref_url_key), getString(R.string.pref_url_default));
-            mWebView.loadUrl(mUrl);
+        if(id == R.id.button_backgroundify) {
+            backgroundify();
         }
-        else if(id == R.id.button_backgroundify) {
-            Log.d("Testing", "Backgroundify Called!");
-            AlarmHelper alarmHelper = new AlarmHelper();
-            alarmHelper.setAlarm(this, false);
+        else if(id == R.id.button_upgrade) {
+            if(!mBackgroundifyPro) {
+                Log.d("Testing", "Upgrade to pro!!!");
+                //upgrade()
+                //TODO: Move to after purchase confirmed.
+                handleSuccessfulUpgradeActions();
+            }
         }
+    }
+
+    private void handleSuccessfulUpgradeActions() {
+        mBackgroundifyPro = true;
+        //Display the fragment as the main content.
+        SettingsFragment sf = (SettingsFragment) getFragmentManager().findFragmentById(R.id.settings_fragment);
+        sf.upgrade();
+        mButtonUpgrade.setVisibility(GONE);
+    }
+
+    @Override
+    public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+        if(key.equals(getString(R.string.pref_url_key))) {
+            searchWebPage();
+        }
+
+        Button backgroundify = (Button) findViewById(R.id.button_backgroundify);
+        backgroundify.setText(getString(R.string.button_accept));
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        if (mService != null) {
+            unbindService(mServiceConn);
+        }
+
+        mSharedPreferences.unregisterOnSharedPreferenceChangeListener(this);
+    }
+
+    @TargetApi(android.os.Build.VERSION_CODES.N)
+    private void displayFaq() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setPositiveButton("Okay!", new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int id) {
+            }
+        });
+
+        AlertDialog alert = builder.create();
+        alert.setTitle(getString(R.string.faq_title));
+        alert.setMessage(getString(R.string.faq_message));
+        alert.show();
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.main, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        int itemThatWasClickedId = item.getItemId();
+        if (itemThatWasClickedId == R.id.action_faq) {
+            displayFaq();
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
     }
 }

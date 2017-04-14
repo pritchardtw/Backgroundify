@@ -15,8 +15,8 @@
     <ListPreference
         android:defaultValue="@string/pref_freq_once_value"
         android:summary="@string/pref_freq_once_label"
-        android:entries="@array/pref_freq_option_labels"
-        android:entryValues="@array/pref_freq_option_values"
+        android:entries="@array/pref_freq_option_pro_labels"
+        android:entryValues="@array/pref_freq_option_pro_values"
         android:key="@string/pref_freq_key"
         android:title="@string/pref_freq_label" />
 
@@ -26,5 +26,13 @@
         android:summaryOn="Enabled"
         android:key="@string/pref_enable_key"
         android:title="@string/pref_enable_title" />
+
+    <SwitchPreference
+        android:defaultValue="false"
+        android:summaryOff="Disabled"
+        android:summaryOn="Enabled"
+        android:key="@string/pref_enable_lock_key"
+        android:title="@string/pref_enable_lock_title"
+        />
 
 </PreferenceScreen>

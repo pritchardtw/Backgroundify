@@ -1,5 +1,6 @@
 package io.thomaspritchard.backgroundify;
 
+import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
@@ -15,32 +16,71 @@ import android.util.Log;
 
 public class SettingsFragment extends PreferenceFragment implements
         SharedPreferences.OnSharedPreferenceChangeListener {
-    public static int sHeight;
-    public static int sWidth;
+
     Context mContext; //Parent context because fragments don't have context.
+    SharedPreferences mSharedPreferences = null;
+    PreferenceScreen mPrefScreen = null;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         // Load the preferences from an XML resource
-        addPreferencesFromResource(R.xml.pref_backgroundify);
-        SharedPreferences sharedPreferences = getPreferenceScreen().getSharedPreferences();
-        PreferenceScreen prefScreen = getPreferenceScreen();
-        int count = prefScreen.getPreferenceCount();
+        if(MainActivity.mBackgroundifyPro) {
+            addPreferencesFromResource(R.xml.pref_backgroundify_pro);
+        }
+        else {
+            addPreferencesFromResource(R.xml.pref_backgroundify);
+        }
 
-        // Go through all of the preferences, and set up their preference summary.
-        for (int i = 0; i < count; i++) {
-            Preference p = prefScreen.getPreference(i);
-            // You don't need to set up preference summaries for checkbox preferences because
-            // they are already set up in xml using summaryOff and summary On
-            if (!(p instanceof CheckBoxPreference) && !(p instanceof SwitchPreference)) {
-                String value = sharedPreferences.getString(p.getKey(), "");
-                setPreferenceSummary(p, value);
+        updateAllPreferenceSummaries();
+
+        getPreferenceScreen().getSharedPreferences().registerOnSharedPreferenceChangeListener(this);
+    }
+
+    public void upgrade() {
+        String url = mSharedPreferences.getString(getString(R.string.pref_url_key), getString(R.string.pref_url_default));
+        Boolean enabled = mSharedPreferences.getBoolean(getString(R.string.pref_enable_key), false);
+        mPrefScreen.removeAll();
+        addPreferencesFromResource(R.xml.pref_backgroundify_pro);
+        mSharedPreferences = mPrefScreen.getSharedPreferences();
+
+        if (!(android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N)) {
+            int count = mPrefScreen.getPreferenceCount();
+
+            // Go through all of the preferences, and set up their preference summary.
+            for (int i = 0; i < count; i++) {
+                Preference p = mPrefScreen.getPreference(i);
+                // You don't need to set up preference summaries for checkbox preferences because
+                // they are already set up in xml using summaryOff and summary On
+                if (p.getKey() == getString(R.string.pref_enable_lock_key)) {
+                    mPrefScreen.removePreference(p);
+                }
             }
         }
 
-        getPreferenceScreen().getSharedPreferences().registerOnSharedPreferenceChangeListener(this);
+        SharedPreferences.Editor sPE = mSharedPreferences.edit();
+        sPE.putString(getString(R.string.pref_url_key), url);
+        sPE.putBoolean(getString(R.string.pref_enable_key), enabled);
+        sPE.commit();
+        updateAllPreferenceSummaries();
+    }
+
+    private void updateAllPreferenceSummaries() {
+        mSharedPreferences = getPreferenceScreen().getSharedPreferences();
+        mPrefScreen = getPreferenceScreen();
+        int count = mPrefScreen.getPreferenceCount();
+
+        // Go through all of the preferences, and set up their preference summary.
+        for (int i = 0; i < count; i++) {
+            Preference p = mPrefScreen.getPreference(i);
+            // You don't need to set up preference summaries for checkbox preferences because
+            // they are already set up in xml using summaryOff and summary On
+            if (!(p instanceof CheckBoxPreference) && !(p instanceof SwitchPreference)) {
+                String value = mSharedPreferences.getString(p.getKey(), "");
+                setPreferenceSummary(p, value);
+            }
+        }
     }
 
     private void setPreferenceSummary(Preference preference, String value) {

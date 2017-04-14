@@ -13,19 +13,33 @@
     <string name="pref_freq_key">freq</string>
     <string name="pref_freq_label">Update Frequency</string>
 
-    <string name="pref_freq_once_label">Update Once</string>
-    <string name="pref_freq_1_min_label">Every Minute</string>
-    <string name="pref_freq_5_min_label">Every 5 Minutes</string>
-    <string name="pref_freq_10_min_label">Every 10 Minutes</string>
-    <string name="pref_freq_30_min_label">Every 30 Minutes</string>
-    <string name="pref_freq_1_hour_label">Every Hour</string>
-    <string name="pref_freq_4_hour_label">Every 4 Hours</string>
-    <string name="pref_freq_12_hour_label">Every 12 Hours</string>
-    <string name="pref_freq_1_day_label">Every Day</string>
-    <string name="pref_freq_3_day_label">Every 3 Days</string>
-    <string name="pref_freq_1_week_label">Every Week</string>
+    <string name="pref_enable_lock_title">Update Lock Screen</string>
+    <string name="pref_enable_lock_key">enable lock</string>
 
-    <string name="pref_freq_once_value">0</string>
+
+    <string name="pref_freq_1_min_label">Every Minute (Backgroundify Pro)</string>
+    <string name="pref_freq_5_min_label">Every 5 Minutes (Backgroundify Pro)</string>
+    <string name="pref_freq_10_min_label">Every 10 Minutes (Backgroundify Pro)</string>
+    <string name="pref_freq_30_min_label">Every 30 Minutes (Backgroundify Pro)</string>
+    <string name="pref_freq_1_hour_label">Every Hour (Backgroundify Pro)</string>
+    <string name="pref_freq_4_hour_label">Every 4 Hours (Backgroundify Pro)</string>
+    <string name="pref_freq_12_hour_label">Every 12 Hours (Backgroundify Pro)</string>
+    <string name="pref_freq_1_day_label">Every Day (Backgroundify Pro)</string>
+    <string name="pref_freq_3_day_label">Every 3 Days (Backgroundify Pro)</string>
+    <string name="pref_freq_1_week_label">Every Week (Backgroundify Pro)</string>
+    <string name="pref_freq_once_label">Update Once</string>
+
+    <string name="pref_freq_1_min_pro_label">Every Minute</string>
+    <string name="pref_freq_5_min_pro_label">Every 5 Minutes</string>
+    <string name="pref_freq_10_min_pro_label">Every 10 Minutes</string>
+    <string name="pref_freq_30_min_pro_label">Every 30 Minutes</string>
+    <string name="pref_freq_1_hour_pro_label">Every Hour</string>
+    <string name="pref_freq_4_hour_pro_label">Every 4 Hours</string>
+    <string name="pref_freq_12_hour_pro_label">Every 12 Hours</string>
+    <string name="pref_freq_1_day_pro_label">Every Day</string>
+    <string name="pref_freq_3_day_pro_label">Every 3 Days</string>
+    <string name="pref_freq_1_week_pro_label">Every Week</string>
+
     <string name="pref_freq_1_min_value">1</string>
     <string name="pref_freq_5_min_value">5</string>
     <string name="pref_freq_10_min_value">10</string>
@@ -36,11 +50,45 @@
     <string name="pref_freq_1_day_value">1440</string>
     <string name="pref_freq_3_day_value">4320</string>
     <string name="pref_freq_1_week_value">10080</string>
+    <string name="pref_freq_once_value">0</string>
 
-    <string name="button_preview">Preview URL</string>
+
     <string name="button_accept">Backgroundify!</string>
+    <string name="button_complete">Backgroundified!</string>
+
+    <string name="button_upgrade">Upgrade to Pro!</string>
 
     <string name="broadcast_update_background">io.thomaspritchard.backgroundify.UPDATE_BACKGROUND</string>
     <string name="broadcast_boot_completed">android.intent.action.BOOT_COMPLETED</string>
+
+    <string name="sku_backgroundify_pro">Backgroundify Pro</string>
+
+    <string name="faq">FAQ</string>
+    <string name="faq_message">
+
+        \nWhy is my wallpaper white?
+        \n\nIf the url is invalid it will update to a white screen.
+
+        \n\n\nWhy does my url not work?
+        \n\nTry using http://www.[website], https://www.[website], http://[website], https://[website]
+
+        \n\n\nWhy does it look like the wallpaper is only partially loaded?
+        \n\nSometimes web pages do lots of visual manipulation after the page loads.
+         It is hard to know when this manipulation is complete and sometimes the backgroundification
+         occurs before the visual manipulation is done. It is best to use web pages that load
+         quickly.
+
+        \n\n\nWhy does my wallpaper sometimes look okay and sometimes not?
+        \n\nBackgroundify is loading your web page at your specified interval over your network
+        connection. Page loading is affected by network performance. If it is a slow network at that
+        time sometimes page loading can fail or be incomplete.
+
+        \n\n\nCan I manually run the backgroundification process?
+        \n\nYes pressing the Backgroundify! button (even when it says Backgroundified!) will re-run
+        the backgroundification process in both free and pro versions.
+    </string>
+
+    <string name="faq_title">Frequently Asked Questions</string>
+
 
 </resources>

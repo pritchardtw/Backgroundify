@@ -3,7 +3,9 @@ package io.thomaspritchard.backgroundify;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Point;
+import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.Display;
 import android.view.WindowManager;
@@ -35,11 +37,18 @@ public class BackgroundifyBroadcastReceiver extends BroadcastReceiver {
             backgroundUpdater.setWidth(width);
             backgroundUpdater.setUrl(newUrl);
             backgroundUpdater.updateBackground();
+            SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context.getApplicationContext());
 
-            Log.d("Testing", "Setting Next Alarm");
-            //Set next Alarm
-            AlarmHelper alarmHelper = new AlarmHelper();
-            alarmHelper.setAlarm(context, true);
+            String updateFrequency = sharedPreferences.getString(context.getResources().getString(R.string.pref_freq_key), context.getResources().getString(R.string.pref_freq_once_value));
+            if(!(updateFrequency.equals(context.getResources().getString(R.string.pref_freq_once_value)))) {
+                Log.d("Testing", "Setting Next Alarm");
+                //Set next Alarm
+                AlarmHelper alarmHelper = new AlarmHelper();
+                alarmHelper.setAlarm(context, true);
+            }
+            else {
+                Log.d("Testing", "Not starting next alarm because we're only supposed to update once.");
+            }
         }
         else if(intent.getAction().equals(context.getResources().getString(R.string.broadcast_boot_completed))) {
             AlarmHelper alarmHelper = new AlarmHelper();

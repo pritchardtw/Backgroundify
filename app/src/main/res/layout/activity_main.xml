@@ -28,11 +28,11 @@
         android:background="#444444">
 
         <Button
-            android:id="@+id/button_preview"
+            android:id="@+id/button_upgrade"
             android:layout_height="match_parent"
             android:layout_width="match_parent"
             android:textAlignment="center"
-            android:text="@string/button_preview"
+            android:text="@string/button_upgrade"
             android:textColor="@android:color/white"
             android:background="#444444"
             android:layout_weight="1"

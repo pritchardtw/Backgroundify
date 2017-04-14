@@ -3,7 +3,6 @@
 
     <!-- Label ordering must match values -->
     <array name="pref_freq_option_labels">
-        <item>@string/pref_freq_once_label</item>
         <item>@string/pref_freq_1_min_label</item>
         <item>@string/pref_freq_5_min_label</item>
         <item>@string/pref_freq_10_min_label</item>
@@ -14,11 +13,39 @@
         <item>@string/pref_freq_1_day_label</item>
         <item>@string/pref_freq_3_day_label</item>
         <item>@string/pref_freq_1_week_label</item>
-
+        <item>@string/pref_freq_once_label</item>
     </array>
 
     <array name="pref_freq_option_values">
         <item>@string/pref_freq_once_value</item>
+        <item>@string/pref_freq_once_value</item>
+        <item>@string/pref_freq_once_value</item>
+        <item>@string/pref_freq_once_value</item>
+        <item>@string/pref_freq_once_value</item>
+        <item>@string/pref_freq_once_value</item>
+        <item>@string/pref_freq_once_value</item>
+        <item>@string/pref_freq_once_value</item>
+        <item>@string/pref_freq_once_value</item>
+        <item>@string/pref_freq_once_value</item>
+        <item>@string/pref_freq_once_value</item>
+    </array>
+
+    <!-- Label ordering must match values -->
+    <array name="pref_freq_option_pro_labels">
+        <item>@string/pref_freq_1_min_pro_label</item>
+        <item>@string/pref_freq_5_min_pro_label</item>
+        <item>@string/pref_freq_10_min_pro_label</item>
+        <item>@string/pref_freq_30_min_pro_label</item>
+        <item>@string/pref_freq_1_hour_pro_label</item>
+        <item>@string/pref_freq_4_hour_pro_label</item>
+        <item>@string/pref_freq_12_hour_pro_label</item>
+        <item>@string/pref_freq_1_day_pro_label</item>
+        <item>@string/pref_freq_3_day_pro_label</item>
+        <item>@string/pref_freq_1_week_pro_label</item>
+        <item>@string/pref_freq_once_label</item>
+    </array>
+
+    <array name="pref_freq_option_pro_values">
         <item>@string/pref_freq_1_min_value</item>
         <item>@string/pref_freq_5_min_value</item>
         <item>@string/pref_freq_10_min_value</item>
@@ -29,6 +56,7 @@
         <item>@string/pref_freq_1_day_value</item>
         <item>@string/pref_freq_3_day_value</item>
         <item>@string/pref_freq_1_week_value</item>
+        <item>@string/pref_freq_once_value</item>
     </array>
 
 </resources>
