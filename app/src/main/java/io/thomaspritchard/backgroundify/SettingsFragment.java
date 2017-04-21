@@ -12,10 +12,14 @@ import android.preference.PreferenceFragment;
 import android.preference.PreferenceScreen;
 import android.preference.SwitchPreference;
 import android.util.Log;
+import android.widget.Toast;
+
+import java.util.prefs.PreferenceChangeEvent;
+import java.util.prefs.PreferenceChangeListener;
 
 
 public class SettingsFragment extends PreferenceFragment implements
-        SharedPreferences.OnSharedPreferenceChangeListener {
+        SharedPreferences.OnSharedPreferenceChangeListener, Preference.OnPreferenceChangeListener {
 
     Context mContext; //Parent context because fragments don't have context.
     SharedPreferences mSharedPreferences = null;
@@ -36,6 +40,8 @@ public class SettingsFragment extends PreferenceFragment implements
         updateAllPreferenceSummaries();
 
         getPreferenceScreen().getSharedPreferences().registerOnSharedPreferenceChangeListener(this);
+        Preference preference = findPreference(getString(R.string.pref_url_key));
+        preference.setOnPreferenceChangeListener(this);
     }
 
     public void upgrade() {
@@ -46,13 +52,12 @@ public class SettingsFragment extends PreferenceFragment implements
         mSharedPreferences = mPrefScreen.getSharedPreferences();
 
         if (!(android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N)) {
+            //Remove enable lock screen preference for sdks under 24.
             int count = mPrefScreen.getPreferenceCount();
 
-            // Go through all of the preferences, and set up their preference summary.
             for (int i = 0; i < count; i++) {
                 Preference p = mPrefScreen.getPreference(i);
-                // You don't need to set up preference summaries for checkbox preferences because
-                // they are already set up in xml using summaryOff and summary On
+
                 if (p.getKey() == getString(R.string.pref_enable_lock_key)) {
                     mPrefScreen.removePreference(p);
                 }
@@ -64,6 +69,8 @@ public class SettingsFragment extends PreferenceFragment implements
         sPE.putBoolean(getString(R.string.pref_enable_key), enabled);
         sPE.commit();
         updateAllPreferenceSummaries();
+        Preference preference = findPreference(getString(R.string.pref_url_key));
+        preference.setOnPreferenceChangeListener(this);
     }
 
     private void updateAllPreferenceSummaries() {
@@ -109,6 +116,11 @@ public class SettingsFragment extends PreferenceFragment implements
         else if (!(preference instanceof CheckBoxPreference) && !(preference instanceof SwitchPreference)) {
             String value = sharedPreferences.getString(key, "");
             setPreferenceSummary(preference, value);
+
+            if(preference.getKey().equals(getString(R.string.pref_url_key))) {
+                EditTextPreference etp = (EditTextPreference) preference;
+                etp.setText(mSharedPreferences.getString(getString(R.string.pref_url_key), getString(R.string.pref_url_default)));
+            }
         }
     }
 
@@ -123,5 +135,34 @@ public class SettingsFragment extends PreferenceFragment implements
     public void onDestroy() {
         super.onDestroy();
         getPreferenceScreen().getSharedPreferences().unregisterOnSharedPreferenceChangeListener(this);
+    }
+
+    @Override
+    public boolean onPreferenceChange(Preference preference, Object newValue) {
+        // In this context, we're using the onPreferenceChange listener for manipulating the url
+        Log.d("Testing", "On preference change called");
+        // Double check that the preference is the size preference
+        String urlKey = getString(R.string.pref_url_key);
+        if (preference.getKey().equals(urlKey)) {
+            String url = (String) newValue;
+            Log.d("Testing", "Url = " + url);
+            if (!url.startsWith("www.") && !url.startsWith("http://") && !url.startsWith("https://")) {
+                url = "www." + url;
+            }
+
+            if (!url.startsWith("http://") && !url.startsWith("https://")) {
+                url = "http://" + url;
+            }
+
+            Log.d("Testing", "Url After = " + url);
+
+            SharedPreferences.Editor editor = mSharedPreferences.edit();
+            editor.putString(getString(R.string.pref_url_key), url);
+            editor.apply();
+
+            return false;
+        }
+
+        return true;
     }
 }

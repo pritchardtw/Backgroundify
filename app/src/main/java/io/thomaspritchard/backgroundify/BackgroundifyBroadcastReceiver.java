@@ -32,7 +32,7 @@ public class BackgroundifyBroadcastReceiver extends BroadcastReceiver {
             int width = size.x;
             int height = size.y;
             BackgroundUpdater backgroundUpdater = new BackgroundUpdater();
-            backgroundUpdater.setContext(context);
+            backgroundUpdater.setContext(context.getApplicationContext());
             backgroundUpdater.setHeight(height);
             backgroundUpdater.setWidth(width);
             backgroundUpdater.setUrl(newUrl);

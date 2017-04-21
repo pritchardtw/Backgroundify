@@ -13,6 +13,7 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Point;
 import android.net.http.SslError;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.os.IBinder;
 import android.os.SystemClock;
@@ -41,6 +42,8 @@ public class BackgroundUpdater {
     private int mHeight = 0;
     private int mWidth = 0;
     private String mUrl = "";
+    WebView mWebView = null;
+    Delay mDelay = null;
 
     public void setContext(Context context) {
         this.mContext = context;
@@ -58,16 +61,68 @@ public class BackgroundUpdater {
         this.mUrl = url;
     }
 
+    public class Delay extends AsyncTask<Void, Integer, Integer> {
+        protected Integer doInBackground(Void... params) {
+            for(int i = 10; i >= 0; i--) {
+                Log.d("Testing", "Do in background " + i);
+                SystemClock.sleep(1000);
+                if(isCancelled()) {
+                    return null;
+                }
+                onProgressUpdate(i);
+            }
+            return 1;
+        }
+
+        protected void onProgressUpdate(Integer integer) {
+            Intent progressUpdate = new Intent(mContext.getResources().getString(R.string.broadcast_background_progress));
+            progressUpdate.putExtra("PROGRESS", integer);
+            mContext.sendBroadcast(progressUpdate);
+        }
+
+        protected void onPostExecute(Integer integer) {
+            Log.d("Testing", "Delay over, taking photo and setting background.");
+            Bitmap newBackground = takePicture(mWebView);
+            WallpaperManager wallpaperManager = WallpaperManager.getInstance(mContext);
+            try {
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {//at least version 24
+                    wallpaperManager.setBitmap(newBackground, null, true, WallpaperManager.FLAG_SYSTEM);
+                    //TODO: If premium do wallpaper.
+                    SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(mContext.getApplicationContext());
+                    Boolean updateLock = sharedPreferences.getBoolean(mContext.getResources().getString(R.string.pref_enable_lock_key), false);
+                    if(updateLock) {
+                        wallpaperManager.setBitmap(newBackground, null, true, WallpaperManager.FLAG_LOCK);
+                    }
+                } else {
+                    wallpaperManager.setBitmap(newBackground);
+                    SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(mContext.getApplicationContext());
+                    Boolean updateLock = sharedPreferences.getBoolean(mContext.getResources().getString(R.string.pref_enable_lock_key), false);
+                    if(updateLock) {
+                        Log.d("Testing", "Would update lock if api > 24");
+                    }
+                    else {
+                        Log.d("Testing", "Would not update lock if api > 24");
+                    }
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            Intent updatedBackground = new Intent(mContext.getResources().getString(R.string.broadcast_background_updated));
+            mContext.sendBroadcast(updatedBackground);
+        }
+    }
+
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
     public boolean updateBackground() {
 
-        WebView w = new WebView(mContext);
-        w.layout(0, 0, mWidth, mHeight);
-        w.getSettings().setJavaScriptEnabled(true);
-        w.getSettings().setJavaScriptCanOpenWindowsAutomatically(true);
-        w.setVisibility(View.GONE);
+        mWebView = new WebView(mContext);
+        mWebView.layout(0, 0, mWidth, mHeight);
+        mWebView.getSettings().setJavaScriptEnabled(true);
+        mWebView.getSettings().setJavaScriptCanOpenWindowsAutomatically(true);
+        mWebView.setVisibility(View.GONE);
 
-        w.setWebViewClient(new WebViewClient() {
+        mWebView.setWebViewClient(new WebViewClient() {
 
             boolean timeout = true;
             boolean timedout = false;
@@ -104,39 +159,21 @@ public class BackgroundUpdater {
             @Override
             @TargetApi(android.os.Build.VERSION_CODES.N)
             public void onPageFinished(WebView view, String url) {
-                timeout = false;
                 super.onPageFinished(view, url);
+                timeout = false;
                 if(timedout) {
                     timedout = false;
                     Log.d("Testing", "Page loaded too slow timed out and restarted page load.");
                 }
                 else {
                     Log.d("Testing", "Page finished");
-                    Bitmap newBackground = takePicture(view);
-                    WallpaperManager wallpaperManager = WallpaperManager.getInstance(mContext);
-                    try {
-                        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {//at least version 24
-                            wallpaperManager.setBitmap(newBackground, null, true, WallpaperManager.FLAG_SYSTEM);
-                            //TODO: If premium do wallpaper.
-                            SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(mContext.getApplicationContext());
-                            Boolean updateLock = sharedPreferences.getBoolean(mContext.getResources().getString(R.string.pref_enable_lock_key), false);
-                            if(updateLock) {
-                                wallpaperManager.setBitmap(newBackground, null, true, WallpaperManager.FLAG_LOCK);
-                            }
-                        } else {
-                            wallpaperManager.setBitmap(newBackground);
-                            SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(mContext.getApplicationContext());
-                            Boolean updateLock = sharedPreferences.getBoolean(mContext.getResources().getString(R.string.pref_enable_lock_key), false);
-                            if(updateLock) {
-                                Log.d("Testing", "Would update lock if api > 24");
-                            }
-                            else {
-                                Log.d("Testing", "Would not update lock if api > 24");
-                            }
-                        }
-                    } catch (IOException e) {
-                        e.printStackTrace();
+                    Log.d("Testing", "Delaying 10 seconds before taking photo");
+                    if(mDelay != null) {
+                        Log.d("Testing", "Canceling first delay");
+                        mDelay.cancel(true);
                     }
+                    mDelay = new Delay();
+                    mDelay.execute();
                 }
             }
         });
@@ -144,10 +181,10 @@ public class BackgroundUpdater {
         Log.d("LOAD", "About to load URL");
         CookieManager.getInstance().setAcceptCookie(true);
         if(android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {//at least version lollipop
-            CookieManager.getInstance().setAcceptThirdPartyCookies(w, true);
+            CookieManager.getInstance().setAcceptThirdPartyCookies(mWebView, true);
             CookieManager.getInstance().setAcceptFileSchemeCookies(true);
         }
-        w.loadUrl(mUrl);
+        mWebView.loadUrl(mUrl);
         return true;
     }
 

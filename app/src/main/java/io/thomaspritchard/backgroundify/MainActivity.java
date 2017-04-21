@@ -5,16 +5,20 @@ import android.app.FragmentManager;
 import android.app.FragmentTransaction;
 import android.app.PendingIntent;
 import android.app.WallpaperManager;
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.graphics.Point;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.RemoteException;
+import android.os.SystemClock;
 import android.preference.PreferenceManager;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
@@ -45,6 +49,21 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     public static boolean mBackgroundifyPro = false;
 
+//    private class Delay extends AsyncTask<Void, Void, Integer> {
+//        protected Integer doInBackground(Void... params) {
+//            SystemClock.sleep(15000);
+//            return 1;
+//        }
+//
+//        protected void onProgressUpdate() {
+//        }
+//
+//        protected void onPostExecute(Integer integer) {
+//            Log.d("Testing", "Delay over, taking updating text.");
+//            mButtonBackgroundify.setText(getString(R.string.button_complete));
+//        }
+//    }
+
     public static final String URL = "url";
     SharedPreferences mSharedPreferences = null;
     String mUrl = null;
@@ -54,6 +73,28 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     Button mButtonUpgrade = null;
     Bundle mSavedInstanceState = null;
     IInAppBillingService mService;
+
+    private BroadcastReceiver mBackgroundUpdatedReceiver = new BroadcastReceiver() {
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            Log.d("Testing", "Received background updated notification");
+            if(intent.getAction().equals(context.getResources().getString(R.string.broadcast_background_updated))) {
+                mButtonBackgroundify.setText(getString(R.string.button_complete));
+            }
+        }
+    };
+
+    private BroadcastReceiver mBackgroundProgressReceiver = new BroadcastReceiver() {
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            Log.d("Testing", "Received background progress notification");
+            if(intent.getAction().equals(context.getResources().getString(R.string.broadcast_background_progress))) {
+                mButtonBackgroundify.setText(Integer.toString(intent.getExtras().getInt("PROGRESS")));
+            }
+        }
+    };
 
     ServiceConnection mServiceConn = new ServiceConnection() {
         @Override
@@ -73,7 +114,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     //purchases was successfully received.
                     ArrayList<String> purchasesArray = purchases.getStringArrayList("INAPP_PURCHASE_ITEM_LIST");
                     if(purchasesArray != null) {
-                        if(purchasesArray.contains(getString(R.string.sku_backgroundify_pro))){
+                        if(purchasesArray.contains("backgroundify.pro")){
                             mBackgroundifyPro = true;
                         }
                     }
@@ -124,6 +165,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 new Intent("com.android.vending.billing.InAppBillingService.BIND");
         serviceIntent.setPackage("com.android.vending");
         bindService(serviceIntent, mServiceConn, Context.BIND_AUTO_CREATE);
+
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(getString(R.string.broadcast_background_updated));
+        registerReceiver(mBackgroundUpdatedReceiver, filter);
+
+        IntentFilter otherFilter = new IntentFilter();
+        otherFilter.addAction(getString(R.string.broadcast_background_progress));
+        registerReceiver(mBackgroundProgressReceiver, otherFilter);
     }
 
     private void searchWebPage() {
@@ -136,7 +185,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         Log.d("Testing", "Backgroundify Called!");
         AlarmHelper alarmHelper = new AlarmHelper();
         alarmHelper.setAlarm(this, false);
-        mButtonBackgroundify.setText(getString(R.string.button_complete));
+        mButtonBackgroundify.setText(getString(R.string.button_loading));
     }
 
     private void upgrade() {
@@ -144,7 +193,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         Bundle buyIntentBundle = null;
         try {
             buyIntentBundle = mService.getBuyIntent(3, getPackageName(),
-                    getString(R.string.sku_backgroundify_pro), "inapp", "");
+                    "backgroundify.pro", "inapp", "");
         } catch(RemoteException e) {
             e.printStackTrace();
         }
@@ -182,10 +231,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 try {
                     JSONObject jo = new JSONObject(purchaseData);
                     String sku = jo.getString("productId");
+                    Log.d("Testing", "Sku = " + sku);
                     alert.setTitle("Congratulations!");
-                    alert.setMessage("You have bought " + sku + "!");
+                    alert.setMessage("You have bought Backgroundify Pro!");
                     alert.show();
-                    mBackgroundifyPro = true;
                 }
                 catch (JSONException e) {
                     alert.setTitle("Uh-oh!");
@@ -193,6 +242,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     alert.show();
                     e.printStackTrace();
                 }
+                mBackgroundifyPro = true;
                 handleSuccessfulUpgradeActions();
             }
         }
@@ -207,9 +257,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         else if(id == R.id.button_upgrade) {
             if(!mBackgroundifyPro) {
                 Log.d("Testing", "Upgrade to pro!!!");
-                //upgrade()
-                //TODO: Move to after purchase confirmed.
-                handleSuccessfulUpgradeActions();
+                upgrade();
             }
         }
     }
@@ -240,6 +288,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
 
         mSharedPreferences.unregisterOnSharedPreferenceChangeListener(this);
+        unregisterReceiver(mBackgroundUpdatedReceiver);
+        unregisterReceiver(mBackgroundProgressReceiver);
     }
 
     @TargetApi(android.os.Build.VERSION_CODES.N)

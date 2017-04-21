@@ -55,13 +55,15 @@
 
     <string name="button_accept">Backgroundify!</string>
     <string name="button_complete">Backgroundified!</string>
+    <string name="button_loading">Backgroundifying...</string>
+
 
     <string name="button_upgrade">Upgrade to Pro!</string>
 
     <string name="broadcast_update_background">io.thomaspritchard.backgroundify.UPDATE_BACKGROUND</string>
     <string name="broadcast_boot_completed">android.intent.action.BOOT_COMPLETED</string>
-
-    <string name="sku_backgroundify_pro">Backgroundify Pro</string>
+    <string name="broadcast_background_updated">io.thomaspritchard.backgroundify.BACKGROUND_UPDATED</string>
+    <string name="broadcast_background_progress">io.thomaspritchard.backgroundify.BACKGROUND_PROGRESS</string>
 
     <string name="faq">FAQ</string>
     <string name="faq_message">
