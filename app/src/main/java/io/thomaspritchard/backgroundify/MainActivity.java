@@ -175,6 +175,22 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         registerReceiver(mBackgroundProgressReceiver, otherFilter);
     }
 
+    @Override
+    public void onPause() {
+        super.onPause();
+        if(mWebView != null) {
+            mWebView.onPause();
+        }
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        if(mWebView != null) {
+            mWebView.onResume();
+        }
+    }
+
     private void searchWebPage() {
         Log.d("Testing", "Preview Called!");
         mUrl = mSharedPreferences.getString(getString(R.string.pref_url_key), getString(R.string.pref_url_default));

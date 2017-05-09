@@ -7,7 +7,7 @@ android {
         applicationId "io.thomaspritchard.backgroundify"
         minSdkVersion 15
         targetSdkVersion 25
-        versionCode 6
+        versionCode 7
         versionName "1"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
